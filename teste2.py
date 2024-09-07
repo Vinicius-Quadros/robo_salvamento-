@@ -1,3 +1,6 @@
+from contextlib import nullcontext
+
+
 class Labirinto:
     def __init__(self, arquivo_de_entrada):
         self.mapa = self.carregar_mapa(arquivo_de_entrada)
@@ -43,6 +46,33 @@ class Robo:
         self.carga = "SEM CARGA"  # Robô começa sem o humano
         self.log = []  # Armazena o log das operações
 
+    def regastar(self):
+        while True:
+            leitura_esquerda, leitura_frente, leitura_direita = self.ler_sensores()
+
+
+
+
+    def ler_sensores(self):
+        leitura_da_esquerda = self.chegar_posicao(self.esquerda())
+        leitura_da_direita = self.chegar_posicao(self.direita())
+        leitura_da_frente = self.checar_posicao(self.frente())
+
+        return  leitura_da_esquerda, leitura_da_frente, leitura_da_direita
+
+    def chegar_posicao(self):
+        pass
+
+    def esquerda(self):
+        return print("")
+
+    def direita(self):
+        return print("")
+
+    def frente(self):
+        return print("")
+
+
     def direcao_labirinto(self, posicao_robo):
         linha, coluna = posicao_robo
 
@@ -55,13 +85,11 @@ class Robo:
         elif coluna == self.labirinto.tamanho_horizontal - 1:
             return "W"
 
-    def regastar(self):
-        pass
 
 
 
 labirinto = Labirinto('labirinto_exemplo.txt')
 labirinto.mostrar_mapa()
 robo = Robo(labirinto)
-print(robo.direcao)  # Verifica a direção inicial do robô
+print(f"direcao: {robo.direcao}")  # Verifica a direção inicial do robô
 
