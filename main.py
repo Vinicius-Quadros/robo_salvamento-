@@ -1,95 +1,141 @@
-from contextlib import nullcontext
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+from matplotlib.animation import FuncAnimation
 
 
-class Labirinto:
-    def __init__(self, arquivo_de_entrada):
-        self.mapa = self.carregar_mapa(arquivo_de_entrada)
-        self.posicao_do_humano = self.encontrar_humano()
-        self.posicao_do_robo = self.encontrar_entrada()
-        self.tamanho_horizontal = self.calcular_tamanho_horizontal()
-        self.tamanho_vertical = self.calcular_tamanho_vertical()
+# Função para desenhar o labirinto
+def desenhar_labirinto(ax, mapa):
+    linhas = mapa.strip().split('\n')
+    altura = len(linhas)
+    largura = len(linhas[0])
 
-    @staticmethod
-    def carregar_mapa(arquivo_de_entrada):
-        with open(arquivo_de_entrada, 'r') as ler:
-            mapa = [list(linha.strip()) for linha in ler.readlines()]
-        return mapa
-
-    def encontrar_humano(self):
-        for i, linhas in enumerate(self.mapa):
-            if "H" in linhas:
-                return i, linhas.index('H')
-
-    def encontrar_entrada(self):
-        for i, linha in enumerate(self.mapa):
-            if 'E' in linha:
-                return i, linha.index('E')
-
-    def calcular_tamanho_horizontal(self):
-        if self.mapa:
-            return len(self.mapa[0])
-        return 0
-
-    def calcular_tamanho_vertical(self):
-        return len(self.mapa)
-
-    def mostrar_mapa(self):
-        for linha in self.mapa:
-            print("".join(linha))
+    for y in range(altura):
+        for x in range(largura):
+            caractere = linhas[y][x]
+            # Paredes
+            if caractere == '*':
+                ax.add_patch(plt.Rectangle((x, altura - y - 1), 1, 1, facecolor='black', edgecolor='black'))
+            # Humano
+            elif caractere == 'H':
+                ax.add_patch(plt.Rectangle((x, altura - y - 1), 1, 1, facecolor='red', edgecolor='black'))
+            # Caminhos livres
+            elif caractere == ' ' or caractere == 'E':
+                ax.add_patch(plt.Rectangle((x, altura - y - 1), 1, 1, facecolor='white', edgecolor='black'))
 
 
-class Robo:
-    def __init__(self, labirinto):
-        self.labirinto = labirinto
-        self.x, self.y = labirinto.posicao_do_robo  # Posição inicial (entrada do labirinto)
-        self.direcao = self.direcao_labirinto(labirinto.posicao_do_robo)
-        self.carga = "SEM CARGA"  # Robô começa sem o humano
-        self.log = []  # Armazena o log das operações
+# Função de busca simples (DFS) para encontrar o caminho da entrada até o humano
+def buscar_caminho(mapa):
+    linhas = mapa.strip().split('\n')
+    altura = len(linhas)
+    largura = len(linhas[0])
 
-    def regastar(self):
-        while True:
-            leitura_esquerda, leitura_frente, leitura_direita = self.ler_sensores()
+    # Encontra a posição da entrada e do humano
+    entrada = None
+    humano = None
+    for y in range(altura):
+        for x in range(largura):
+            if linhas[y][x] == 'E':
+                entrada = (x, y)
+            elif linhas[y][x] == 'H':
+                humano = (x, y)
 
+    # Função de DFS para encontrar o caminho
+    caminho = []
+    visitado = set()
 
+    def dfs(pos):
+        if pos == humano:
+            caminho.append(pos)
+            return True
+        x, y = pos
+        if pos in visitado or linhas[y][x] == '*':
+            return False
+        visitado.add(pos)
+        caminho.append(pos)
 
+        # Movimentos possíveis: direita, esquerda, baixo, cima
+        movimentos = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        for mov in movimentos:
+            novo_x, novo_y = x + mov[0], y + mov[1]
+            if 0 <= novo_x < largura and 0 <= novo_y < altura:
+                if dfs((novo_x, novo_y)):
+                    return True
 
-    def ler_sensores(self):
-        leitura_da_esquerda = self.chegar_posicao(self.esquerda())
-        leitura_da_direita = self.chegar_posicao(self.direita())
-        leitura_da_frente = self.checar_posicao(self.frente())
+        caminho.pop()  # Remove se não for o caminho certo
+        return False
 
-        return  leitura_da_esquerda, leitura_da_frente, leitura_da_direita
-
-    def chegar_posicao(self):
-        pass
-
-    def esquerda(self):
-        return print("")
-
-    def direita(self):
-        return print("")
-
-    def frente(self):
-        return print("")
-
-
-    def direcao_labirinto(self, posicao_robo):
-        linha, coluna = posicao_robo
-
-        if linha == 0:
-            return "S"
-        elif linha == self.labirinto.tamanho_vertical - 1:
-            return "N"
-        elif coluna == 0:
-            return "E"
-        elif coluna == self.labirinto.tamanho_horizontal - 1:
-            return "W"
+    dfs(entrada)
+    return caminho
 
 
+# Função para criar a animação do robô
+def animar_robo(mapa, caminho):
+    linhas = mapa.strip().split('\n')
+    altura = len(linhas)
+
+    fig, ax = plt.subplots()
+    desenhar_labirinto(ax, mapa)
+
+    # Configura o aspecto para que as células sejam quadradas
+    ax.set_aspect('equal')
+    ax.set_xlim(0, len(linhas[0]))
+    ax.set_ylim(0, altura)
+    ax.axis('off')
+
+    # Adiciona o robô (bloco azul) inicial na posição da entrada
+    robo = patches.Rectangle((caminho[0][0], altura - caminho[0][1] - 1), 1, 1, facecolor='blue', edgecolor='black')
+    ax.add_patch(robo)
+
+    # Lista para guardar as marcas de onde o robô já passou (ida e volta)
+    marcas = []
+
+    # Função de atualização da animação
+    def update(frame):
+        total_frames = len(caminho) * 2  # Ida e volta
+        halfway = len(caminho)
+
+        if frame < halfway:  # Ida (cor azul)
+            pos = caminho[frame]
+            # Adiciona uma marca azul onde o robô passou
+            marca = patches.Rectangle((pos[0], altura - pos[1] - 1), 1, 1, facecolor='blue', edgecolor='black')
+            ax.add_patch(marca)
+            marcas.append(marca)
+            robo.set_xy((pos[0], altura - pos[1] - 1))
+        else:  # Volta (cor roxa)
+            pos = caminho[total_frames - frame - 1]
+            # Adiciona uma marca roxa no caminho de volta
+            marca = patches.Rectangle((pos[0], altura - pos[1] - 1), 1, 1, facecolor='purple', edgecolor='black')
+            ax.add_patch(marca)
+            marcas.append(marca)
+            robo.set_xy((pos[0], altura - pos[1] - 1))
+
+            # Verifica se o robô chegou de volta à entrada e para a animação
+            if frame == total_frames - 1:  # Último quadro
+                anim.event_source.stop()
+
+        return [robo] + marcas
+
+    # Cria a animação
+    anim = FuncAnimation(fig, update, frames=len(caminho) * 2, interval=500, blit=True)
+
+    # Exibe a animação
+    plt.show()
 
 
-labirinto = Labirinto('labirinto_exemplo.txt')
-labirinto.mostrar_mapa()
-robo = Robo(labirinto)
-print(f"direcao: {robo.direcao}")  # Verifica a direção inicial do robô
+# Função para carregar o mapa de um arquivo .txt
+def carregar_mapa(arquivo):
+    with open(arquivo, 'r') as f:
+        return f.read()
 
+
+# Caminho do arquivo .txt com o mapa do labirinto
+arquivo_mapa = 'mapa.txt'
+
+# Carrega o mapa a partir do arquivo
+mapa_labirinto = carregar_mapa(arquivo_mapa)
+
+# Busca o caminho da entrada até o humano
+caminho = buscar_caminho(mapa_labirinto)
+
+# Anima o robô seguindo o caminho (ida e volta)
+animar_robo(mapa_labirinto, caminho)
