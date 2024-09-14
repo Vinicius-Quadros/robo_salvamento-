@@ -134,10 +134,10 @@ class Robo:
         caminho = self.bfs(self.posicao, self.labirinto.posicao_humano)
         if caminho:
             self.caminho = caminho
-            self.logs.append(("MISS", "Caminho encontrado"))
+            self.logs.append("Caminho encontrado")
             return True
         else:
-            self.logs.append(("MISS", "Missão falhou: Caminho não encontrado"))
+            self.logs.append("Missão falhou: Caminho não encontrado")
             return False
 
     def seguir_caminho(self):
@@ -167,17 +167,17 @@ class Robo:
         if not encontrado:
             return
 
-        self.logs.append(("MISS", "Iniciando missão de resgate"))
+        self.logs.append("Iniciando missão de resgate")
         self.seguir_caminho()
         self.pegar_humano()
 
         self.caminho = list(reversed(self.caminho))
-        self.logs.append(("MISS", "Iniciando retorno à entrada"))
+        self.logs.append("Iniciando retorno à entrada")
         self.seguir_caminho()
 
         # Ejeção do humano ao final da missão
         self.registrar_ejecao()
-        self.logs.append(("MISS", "Missão concluída"))
+        self.logs.append("Missão concluída")
 
     def registrar_ejecao(self):
         """Registra o comando de ejeção do humano"""
