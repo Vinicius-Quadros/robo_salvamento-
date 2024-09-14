@@ -16,8 +16,8 @@ def main():
     robo.executar_missao()
 
     # Gerar o log em CSV
-    robo.gerar_log_csv('log_robo.csv')
-    print("Missão concluída. Logs salvos em 'log_robo.csv'.")
+    robo.gerar_log_csv(f'{nome_arquivo_mapa}_log.csv')
+    print(f"Missão concluída. Logs salvos em {nome_arquivo_mapa}_log.csv'.")
 
 if __name__ == "__main__":
     main()
