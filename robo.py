@@ -17,13 +17,15 @@ class Robo:
     def direcao_labirinto(self, posicao_entrada):
         linha, coluna = posicao_entrada
         if linha == 0:
-            return "S"
+            return "S"  # Entrada na parte superior, robô virado para o sul
         elif linha == self.labirinto.altura - 1:
-            return "N"
+            return "N"  # Entrada na parte inferior, robô virado para o norte
         elif coluna == 0:
-            return "E"
+            return "E"  # Entrada na esquerda, robô virado para o leste
         elif coluna == self.labirinto.largura - 1:
-            return "W"
+            return "W"  # Entrada na direita, robô virado para o oeste
+        else:
+            raise ValueError("Posicao de entrada invalida")  # Lança um erro se a posição não estiver na borda
 
     def registrar_log(self, comando):
         esquerda = self.sensor_esquerda()
@@ -101,8 +103,6 @@ class Robo:
         if self.posicao == self.labirinto.posicao_humano:
             self.com_humano = True
             self.registrar_log("P")
-        else:
-            self.registrar_log("P")
 
     def gerar_log_csv(self, nome_arquivo):
         with open(nome_arquivo, mode='w', newline='') as file:
@@ -137,7 +137,7 @@ class Robo:
             self.logs.append(["Caminho encontrado"])
             return True
         else:
-            self.logs.append(["Missão falhou: Caminho não encontrado"])
+            self.logs.append(["Missao falhou: Caminho nao encontrado"])
             return False
 
     def seguir_caminho(self):
@@ -163,23 +163,71 @@ class Robo:
             return "W"
 
     def executar_missao(self):
+        # Encontrar caminho até o humano
         encontrado = self.encontrar_caminho()
         if not encontrado:
+            self.logs.append(["Missao falhou: Caminho nao encontrado"])  # Adicione a mensagem correta de falha
             return
 
-        self.logs.append(["Iniciando missão de resgate"])
+        # Seguir o caminho até o humano
+        self.logs.append(["Iniciando missao de resgate"])
         self.seguir_caminho()
+
+        # Pegar o humano
         self.pegar_humano()
 
-        self.caminho = list(reversed(self.caminho))
-        self.logs.append(["Iniciando retorno à entrada"])
-        self.seguir_caminho()
+        # Verifica se o humano foi coletado
+        if not self.com_humano:
+            self.logs.append(["Missão falhou: Humano não coletado"])
+            return
 
-        # Ejeção do humano ao final da missão
+        # Seguir o caminho de volta
+        caminho_volta = list(reversed(self.caminho))
+        self.caminho = caminho_volta
+        self.logs.append(["Iniciando retorno a entrada"])
+        self.seguir_caminho()
         self.registrar_ejecao()
-        self.logs.append(["Missão concluída"])
+        self.logs.append(["Missao concluida"])
 
     def registrar_ejecao(self):
         """Registra o comando de ejeção do humano"""
         self.com_humano = False  # Após ejeção, o compartimento fica sem carga
         self.registrar_log("E")
+
+
+    def verificar_colisao(self, proxima_posicao):
+        if not self.labirinto.is_valida(proxima_posicao):
+            self.logs.append(["Alarme: Colisão com parede!"])
+            return True
+        return False
+
+    def verificar_atropelamento(self, proxima_posicao):
+        if self.labirinto.mapa[proxima_posicao[0]][proxima_posicao[1]] == 'H':
+            self.logs.append(["Alarme: Atropelamento de humano!"])
+            return True
+        return False
+
+    def verificar_beco_sem_saida(self):
+        esquerda = self.sensor_esquerda()
+        direita = self.sensor_direita()
+        frente = self.sensor_frente()
+
+        # Adicionando logs temporários para depuração
+        print(f"Sensores: Esquerda={esquerda}, Direita={direita}, Frente={frente}")
+
+        if self.com_humano and esquerda == 'PAREDE' and direita == 'PAREDE' and frente == 'PAREDE':
+            self.logs.append(["Alarme: Beco sem saída após coleta do humano!"])
+            return True
+        return False
+
+    def verificar_ejecao_sem_humano(self):
+        if not self.com_humano:
+            self.logs.append(["Alarme: Tentativa de ejeção sem humano presente!"])
+            return True
+        return False
+
+    def verificar_coleta_sem_humano(self):
+        if self.sensor_frente() != 'HUMANO':
+            self.logs.append(["Alarme: Tentativa de coleta sem humano à frente!"])
+            return True
+        return False
