@@ -100,9 +100,31 @@ class Robo:
             return False
 
     def pegar_humano(self):
-        if self.posicao == self.labirinto.posicao_humano:
+        """Coleta o humano quando está a uma posição de distância"""
+        if self.esta_proximo_ao_humano():
             self.com_humano = True
+            self.atualizar_posicao_humano()
+            self.sensor_esquerda()
+            self.sensor_direita()
+            self.sensor_frente()
             self.registrar_log("P")
+            return True
+        return False
+
+    def esta_proximo_ao_humano(self):
+        """Verifica se o robô está a uma posição de distância do humano"""
+        linha, coluna = self.posicao
+        linha_humano, coluna_humano = self.labirinto.posicao_humano
+
+        # Verifica se está a uma posição de distância
+        return abs(linha - linha_humano) + abs(coluna - coluna_humano) == 1
+
+    def atualizar_posicao_humano(self):
+        """Marca a posição do humano como vazia após a coleta"""
+        linha_humano, coluna_humano = self.labirinto.posicao_humano
+        self.labirinto.mapa[linha_humano][coluna_humano] = "VAZIO"  # Atualiza o mapa
+        self.labirinto.posicao_humano = None
+
 
     def gerar_log_csv(self, nome_arquivo):
         with open(nome_arquivo, mode='w', newline='') as file:
@@ -148,7 +170,9 @@ class Robo:
             direcao_necessaria = self.direcao_para_posicao(pos)
             while self.direcao != direcao_necessaria:
                 self.girar()
-            self.avancar()
+
+            if not self.avancar():
+                break
 
     def direcao_para_posicao(self, pos):
         linha_atual, coluna_atual = self.posicao
@@ -166,28 +190,31 @@ class Robo:
         # Encontrar caminho até o humano
         encontrado = self.encontrar_caminho()
         if not encontrado:
-            self.logs.append(["Missao falhou: Caminho nao encontrado"])  # Adicione a mensagem correta de falha
+            self.logs.append(["Missao falhou: Caminho nao encontrado"])
             return
 
-        # Seguir o caminho até o humano
+        # Seguir o caminho até próximo do humano
         self.logs.append(["Iniciando missao de resgate"])
-        self.seguir_caminho()
+        for pos in self.caminho[1:]:
+            direcao_necessaria = self.direcao_para_posicao(pos)
+            while self.direcao != direcao_necessaria:
+                self.girar()
 
-        # Pegar o humano
-        self.pegar_humano()
+            if not self.avancar():
+                break  # Se não puder avançar, sair do loop
 
-        # Verifica se o humano foi coletado
-        if not self.com_humano:
-            self.logs.append(["Missão falhou: Humano não coletado"])
-            return
+            # Tentar pegar o humano a uma posição de distância
+            if self.pegar_humano():
+                self.logs.append(["Iniciando retorno a entrada"])
+                break
 
-        # Seguir o caminho de volta
-        caminho_volta = list(reversed(self.caminho))
-        self.caminho = caminho_volta
-        self.logs.append(["Iniciando retorno a entrada"])
-        self.seguir_caminho()
-        self.registrar_ejecao()
-        self.logs.append(["Missao concluida"])
+        # Se o humano foi coletado, iniciar o retorno
+        if self.com_humano:
+            caminho_volta = list(reversed(self.caminho[:self.caminho.index(self.posicao) + 1]))  # Caminho de volta até a entrada
+            self.caminho = caminho_volta
+            self.seguir_caminho()
+            self.registrar_ejecao()
+            self.logs.append(["Missao concluida"])
 
     def registrar_ejecao(self):
         """Registra o comando de ejeção do humano"""
