@@ -100,8 +100,8 @@ class Robo:
             return False
 
     def pegar_humano(self):
-        """Coleta o humano quando está a uma posição de distância"""
-        if self.esta_proximo_ao_humano():
+        """Coleta o humano apenas quando ele estiver no sensor da frente"""
+        if self.sensor_frente() == 'HUMANO':
             self.com_humano = True
             self.atualizar_posicao_humano()
             self.sensor_esquerda()
@@ -109,7 +109,13 @@ class Robo:
             self.sensor_frente()
             self.registrar_log("P")
             return True
+        elif self.sensor_esquerda() == 'HUMANO' or self.sensor_direita() == 'HUMANO':
+            # Se o humano estiver em um sensor lateral, girar até que ele esteja na frente
+            while self.sensor_frente() != 'HUMANO':
+                self.girar()
+            return self.pegar_humano()  # Tentar pegar o humano novamente após girar
         return False
+
 
     def esta_proximo_ao_humano(self):
         """Verifica se o robô está a uma posição de distância do humano"""
