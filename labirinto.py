@@ -10,7 +10,14 @@ class Labirinto:
     @staticmethod
     def carregar_mapa(arquivo_mapa):
         with open(arquivo_mapa, 'r') as file:
-            mapa = [list(linha.rstrip('\n')) for linha in file.readlines()]
+            lines = [linha.rstrip('\n') for linha in file.readlines()]
+            if not lines:
+                raise ValueError("Mapa vazio")
+            largura = len(lines[0])
+            for line in lines:
+                if len(line) != largura:
+                    raise ValueError('Mapa corrompido: linhas de comprimentos diferentes')
+            mapa = [list(line) for line in lines]
         return mapa
 
     def encontrar_humano(self):
@@ -43,9 +50,14 @@ class Labirinto:
         linha_max = self.altura - 1
         coluna_max = self.largura - 1
 
-        # Verifica se a posição atual é na borda e não é uma parede
+        # Verifica se a posição atual é uma parede
         if self.mapa[linha][coluna] == '*':
             return False
+
+        # Verifica se a direção é válida
+        if direcao not in ['N', 'S', 'E', 'W']:
+            raise ValueError(f"Direção inválida: {direcao}")
+
         if direcao == 'N' and linha == 0:
             return True
         elif direcao == 'S' and linha == linha_max:

@@ -111,9 +111,6 @@ class Robo:
             self.posicao = nova_posicao
             self.registrar_log("A")
             return True
-        else:
-            self.registrar_log("A")
-            return False
 
     def pegar_humano(self):
         """Coleta o humano apenas quando ele estiver no sensor da frente"""
@@ -250,6 +247,7 @@ class Robo:
             return
         # Registrar a ejeção
         self.registrar_log("E")
+        self.com_humano = False
 
     def verificar_colisao(self, proxima_posicao):
         if not self.labirinto.is_valida(proxima_posicao):
