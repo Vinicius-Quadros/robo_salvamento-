@@ -32,8 +32,6 @@ class Robo:
         direita = self.sensor_direita()
         frente = self.sensor_frente()
         carga = "COM HUMANO" if self.com_humano else "SEM CARGA"
-        if comando == "E":
-            carga = "SEM CARGA"
         self.logs.append([comando, esquerda, direita, frente, carga])
 
     def sensor_frente(self):
@@ -245,9 +243,10 @@ class Robo:
         # Verificar se está tentando ejetar sem ter um humano
         if self.verificar_ejecao_sem_humano():
             return
+        self.com_humano = False
         # Registrar a ejeção
         self.registrar_log("E")
-        self.com_humano = False
+
 
     def verificar_colisao(self, proxima_posicao):
         if not self.labirinto.is_valida(proxima_posicao):
