@@ -10,8 +10,6 @@ class Robo:
         self.com_humano = False
         self.logs = []
         self.caminho = []
-
-        # Registra o log de inicialização
         self.registrar_log("LIGAR")
 
     def direcao_labirinto(self, posicao_entrada):
@@ -25,7 +23,7 @@ class Robo:
         elif coluna == self.labirinto.largura - 1:
             return "W"  # Entrada na direita, robô virado para o oeste
         else:
-            raise ValueError("Posicao de entrada invalida")  # Lança um erro se a posição não estiver na borda
+            raise ValueError("Posicao de entrada invalida")
 
     def registrar_log(self, comando):
         esquerda = self.sensor_esquerda()
@@ -61,7 +59,7 @@ class Robo:
 
     def analisar_posicao(self, pos):
         if not self.labirinto.is_dentro_dos_limites(pos):
-            # Verifica se o robô está na saída e olhando para fora
+            # Vê se o robô está na saída e olhando para fora
             if self.labirinto.is_saida(self.posicao, self.direcao):
                 return "VAZIO"
             else:
@@ -99,10 +97,8 @@ class Robo:
 
     def avancar(self):
         nova_posicao = self.frente()
-        # Verificar colisão
         if self.verificar_colisao(nova_posicao):
             return False
-        # Verificar atropelamento
         if self.verificar_atropelamento(nova_posicao):
             return False
         if self.labirinto.is_valida(nova_posicao):
@@ -111,35 +107,28 @@ class Robo:
             return True
 
     def pegar_humano(self):
-        """Coleta o humano apenas quando ele estiver no sensor da frente"""
         if self.sensor_frente() == 'HUMANO':
             self.com_humano = True
             self.atualizar_posicao_humano()
             self.registrar_log("P")
             return True
         elif self.sensor_esquerda() == 'HUMANO' or self.sensor_direita() == 'HUMANO':
-            # Se o humano estiver em um sensor lateral, girar até que ele esteja na frente
             while self.sensor_frente() != 'HUMANO':
                 self.girar()
-            return self.pegar_humano()  # Tentar pegar o humano novamente após girar
+            return self.pegar_humano()
         else:
-            # Verificar se está tentando coletar sem um humano
             if self.verificar_coleta_sem_humano():
                 self.logs.append(["Tentativa de coleta sem humano detectada"])
                 return False
 
     def esta_proximo_ao_humano(self):
-        """Verifica se o robô está a uma posição de distância do humano"""
         linha, coluna = self.posicao
         linha_humano, coluna_humano = self.labirinto.posicao_humano
-
-        # Verifica se está a uma posição de distância
         return abs(linha - linha_humano) + abs(coluna - coluna_humano) == 1
 
     def atualizar_posicao_humano(self):
-        """Marca a posição do humano como vazia após a coleta"""
         linha_humano, coluna_humano = self.labirinto.posicao_humano
-        self.labirinto.mapa[linha_humano][coluna_humano] = "VAZIO"  # Atualiza o mapa
+        self.labirinto.mapa[linha_humano][coluna_humano] = "VAZIO"
         self.labirinto.posicao_humano = None
 
 
@@ -207,13 +196,11 @@ class Robo:
             return "W"
 
     def executar_missao(self):
-        # Encontrar caminho até o humano
         encontrado = self.encontrar_caminho()
         if not encontrado:
             self.logs.append(["Missao falhou: Caminho nao encontrado"])
             return
 
-        # Iniciar o resgate
         self.logs.append(["Iniciando missao de resgate"])
         for pos in self.caminho[1:]:
             direcao_necessaria = self.direcao_para_posicao(pos)
@@ -221,16 +208,13 @@ class Robo:
                 self.girar()
 
             if not self.avancar():
-                break  # Se não puder avançar, sair do loop
+                break
 
-            # Verificar se está próximo o suficiente do humano para pegá-lo
             if self.esta_proximo_ao_humano():
-                # Tentar pegar o humano apenas quando estiver a uma posição de distância
                 if self.pegar_humano():
                     self.logs.append(["iniciando retorno"])
-                    break  # Sai do loop, pois o humano foi coletado
+                    break
 
-        # Se o humano foi coletado, iniciar o retorno
         if self.com_humano:
             caminho_volta = list(
                 reversed(self.caminho[:self.caminho.index(self.posicao) + 1]))  # Caminho de volta até a entrada
@@ -240,11 +224,9 @@ class Robo:
             self.logs.append(["Missao concluida"])
 
     def registrar_ejecao(self):
-        # Verificar se está tentando ejetar sem ter um humano
         if self.verificar_ejecao_sem_humano():
             return
         self.com_humano = False
-        # Registrar a ejeção
         self.registrar_log("E")
 
 

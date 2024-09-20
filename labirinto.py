@@ -50,11 +50,9 @@ class Labirinto:
         linha_max = self.altura - 1
         coluna_max = self.largura - 1
 
-        # Verifica se a posição atual é uma parede
         if self.mapa[linha][coluna] == '*':
             return False
 
-        # Verifica se a direção é válida
         if direcao not in ['N', 'S', 'E', 'W']:
             raise ValueError(f"Direção inválida: {direcao}")
 

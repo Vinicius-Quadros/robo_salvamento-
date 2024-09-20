@@ -12,7 +12,6 @@ from robo import Robo
 class TestRobo(unittest.TestCase):
 
     def setUp(self):
-        # Caminho absoluto para 'mapa.txt' baseado no local deste arquivo
         mapa_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'mapa.txt'))
         self.labirinto = Labirinto(mapa_path)
         self.robo = Robo(self.labirinto)
@@ -46,7 +45,6 @@ class TestRobo(unittest.TestCase):
         self.assertFalse(self.robo.avancar())
 
     def test_girar(self):
-        # Testa a função de giro do robô
         direcoes = ['N', 'E', 'S', 'W']
         self.robo.direcao = 'N'
         for direcao_esperada in direcoes[1:] + ['N']:
@@ -54,17 +52,14 @@ class TestRobo(unittest.TestCase):
             self.assertEqual(self.robo.direcao, direcao_esperada)
 
     def test_pegar_humano(self):
-        # Posiciona o robô ao lado do humano
         self.robo.posicao = (self.labirinto.posicao_humano[0] - 1, self.labirinto.posicao_humano[1])
         self.robo.direcao = 'S'  # Olhando para o humano
         self.assertTrue(self.robo.pegar_humano())
         self.assertTrue(self.robo.com_humano)
         self.assertIsNone(self.labirinto.posicao_humano)
-        # Tentar pegar novamente
         self.assertFalse(self.robo.pegar_humano())
 
     def test_pegar_humano_sem_humano(self):
-        # Posiciona o robô em um local sem humano
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
         self.assertFalse(self.robo.pegar_humano())
@@ -72,34 +67,28 @@ class TestRobo(unittest.TestCase):
         self.assertIn("Alarme: Tentativa de coleta sem humano a frente!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_sensor_frente(self):
-        # Testa o sensor frontal
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
         self.assertEqual(self.robo.sensor_frente(), 'VAZIO')
-
         self.labirinto.mapa[2][1] = '*'  # Coloca uma parede à frente
         self.assertEqual(self.robo.sensor_frente(), 'PAREDE')
 
     def test_sensor_esquerda(self):
-        # Testa o sensor esquerdo
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
-        self.assertEqual(self.robo.sensor_esquerda(), 'VAZIO')  # Posição depende do mapa
+        self.assertEqual(self.robo.sensor_esquerda(), 'VAZIO')
 
     def test_sensor_direita(self):
-        # Testa o sensor direito
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
-        self.assertEqual(self.robo.sensor_direita(), 'PAREDE')  # Posição depende do mapa
+        self.assertEqual(self.robo.sensor_direita(), 'PAREDE')
 
     def test_bfs(self):
-        # Testa a função de busca (BFS)
         caminho = self.robo.bfs(self.robo.posicao, self.labirinto.posicao_humano)
         self.assertIsNotNone(caminho)
         self.assertTrue(len(caminho) > 0)
 
     def test_bfs_sem_caminho(self):
-        # Bloqueia o caminho até o humano
         self.labirinto.mapa[2][1] = '*'
         self.labirinto.mapa[1][2] = '*'
         self.labirinto.mapa[1][0] = '*'
@@ -107,24 +96,20 @@ class TestRobo(unittest.TestCase):
         self.assertIsNone(caminho)
 
     def test_executar_missao(self):
-        # Executa a missão e verifica se o humano foi coletado
         self.robo.executar_missao()
-        self.assertFalse(self.robo.com_humano)  # Após a missão, o humano deve ter sido entregue
+        self.assertFalse(self.robo.com_humano)
 
     def test_missao_falha(self):
-        # Bloqueia o caminho até o humano para causar uma falha na missão
         self.labirinto.mapa[self.labirinto.posicao_humano[0]][self.labirinto.posicao_humano[1]-1] = '*'
         self.labirinto.mapa[self.labirinto.posicao_humano[0]][self.labirinto.posicao_humano[1]+1] = '*'
         self.labirinto.mapa[self.labirinto.posicao_humano[0]-1][self.labirinto.posicao_humano[1]] = '*'
         self.labirinto.mapa[self.labirinto.posicao_humano[0]+1][self.labirinto.posicao_humano[1]] = '*'
         self.robo.executar_missao()
 
-        # Verifica se a mensagem de falha da missão está nos logs
         mensagens_log = [log[0] for log in self.robo.logs if isinstance(log, list) and len(log) > 0]
         self.assertIn("Missao falhou: Caminho nao encontrado", mensagens_log)
 
     def test_gerar_log_csv(self):
-        # Testa a função de gerar o log CSV
         self.robo.executar_missao()
         nome_arquivo = 'log_robo_test.csv'
         self.robo.gerar_log_csv(nome_arquivo)
@@ -134,7 +119,6 @@ class TestRobo(unittest.TestCase):
         os.remove(nome_arquivo)
 
     def test_condicoes_adicionais(self):
-        # Testa casos adicionais não cobertos
         self.robo.posicao = (0, 0)  # Testa uma posição limite
         self.assertFalse(self.robo.avancar())  # Testa avanço em posição inválida
         self.robo.direcao = 'N'
@@ -161,39 +145,36 @@ class TestRobo(unittest.TestCase):
         self.assertIn("Alarme: Atropelamento de humano!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_alarme_beco_sem_saida(self):
-        self.robo.com_humano = True  # Suponha que o robô já coletou o humano
-        self.robo.posicao = (1, 1)  # Define a posição do robô
+        self.robo.com_humano = True
+        self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
-        self.labirinto.mapa[2][1] = '*'  # Parede à frente
-        self.labirinto.mapa[1][0] = '*'  # Parede à esquerda
-        self.labirinto.mapa[1][2] = '*'  # Parede à direita
+        self.labirinto.mapa[2][1] = '*'
+        self.labirinto.mapa[1][0] = '*'
+        self.labirinto.mapa[1][2] = '*'
 
-        # Atualiza o mapa e verifica
         self.robo.verificar_beco_sem_saida()
         self.assertIn("Alarme: Beco sem saída após coleta do humano!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_alarme_ejecao_sem_humano(self):
-        self.robo.com_humano = False  # O robô não tem humano
+        self.robo.com_humano = False
         self.robo.registrar_ejecao()
         self.assertIn("Alarme: Tentativa de ejeção sem humano presente!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_alarme_coleta_sem_humano(self):
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
-        self.labirinto.mapa[2][1] = ' '  # Célula à frente está vazia
+        self.labirinto.mapa[2][1] = ' '
         self.robo.pegar_humano()
         self.assertIn("Alarme: Tentativa de coleta sem humano a frente!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_atualizar_posicao_humano(self):
-        # Verifica se a posição do humano é atualizada após a coleta
         self.robo.posicao = (self.labirinto.posicao_humano[0] - 1, self.labirinto.posicao_humano[1])
-        self.robo.direcao = 'S'  # Olhando para o humano
+        self.robo.direcao = 'S'
         self.robo.pegar_humano()
         self.assertIsNone(self.labirinto.posicao_humano)
         self.assertEqual(self.labirinto.mapa[self.robo.posicao[0]+1][self.robo.posicao[1]], 'VAZIO')
 
     def test_direcao_para_posicao(self):
-        # Testa a função que determina a direção necessária para uma posição
         self.robo.posicao = (2, 2)
         pos_alvo = (2, 3)
         direcao = self.robo.direcao_para_posicao(pos_alvo)
@@ -204,7 +185,6 @@ class TestRobo(unittest.TestCase):
         self.assertEqual(direcao, 'N')
 
     def test_seguir_caminho(self):
-        # Testa se o robô segue o caminho corretamente
         self.robo.caminho = [(1, 1), (1, 2)]
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'E'
@@ -223,7 +203,6 @@ class TestRobo(unittest.TestCase):
         self.assertEqual(comandos, ['LIGAR', 'Alarme: Colisão com parede!', 'G', 'A'])
 
     def test_analisar_posicao(self):
-        # Testa a função de analisar posição
         self.assertEqual(self.robo.analisar_posicao((1, 1)), 'VAZIO')
         self.labirinto.mapa[1][1] = '*'
         self.assertEqual(self.robo.analisar_posicao((1, 1)), 'PAREDE')
@@ -231,7 +210,6 @@ class TestRobo(unittest.TestCase):
         self.assertEqual(self.robo.analisar_posicao((1, 1)), 'HUMANO')
 
     def test_frente(self):
-        # Testa a função que retorna a posição à frente do robô
         self.robo.posicao = (2, 2)
         self.robo.direcao = 'N'
         self.assertEqual(self.robo.frente(), (1, 2))
@@ -243,20 +221,17 @@ class TestRobo(unittest.TestCase):
         self.assertEqual(self.robo.frente(), (2, 1))
 
     def test_esta_proximo_ao_humano(self):
-        # Testa se o robô está próximo ao humano
         self.robo.posicao = (self.labirinto.posicao_humano[0], self.labirinto.posicao_humano[1] -1)
         self.assertTrue(self.robo.esta_proximo_ao_humano())
         self.robo.posicao = (self.labirinto.posicao_humano[0] -2, self.labirinto.posicao_humano[1])
         self.assertFalse(self.robo.esta_proximo_ao_humano())
 
     def test_verificar_ejecao_sem_humano(self):
-        # Testa tentar ejetar sem humano
         self.robo.com_humano = False
         self.assertTrue(self.robo.verificar_ejecao_sem_humano())
         self.assertIn("Alarme: Tentativa de ejeção sem humano presente!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_verificar_coleta_sem_humano(self):
-        # Testa tentar coletar sem humano à frente
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
         self.labirinto.mapa[2][1] = ' '
@@ -264,7 +239,6 @@ class TestRobo(unittest.TestCase):
         self.assertIn("Alarme: Tentativa de coleta sem humano a frente!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_verificar_beco_sem_saida(self):
-        # Testa se o robô identifica um beco sem saída após coletar o humano
         self.robo.com_humano = True
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'S'
@@ -275,7 +249,6 @@ class TestRobo(unittest.TestCase):
         self.assertIn("Alarme: Beco sem saída após coleta do humano!", [log[0] for log in self.robo.logs if isinstance(log, list)])
 
     def test_pegar_humano_lateral_direita(self):
-        # Posiciona o humano à direita do robô
         self.labirinto.posicao_humano = (2, 2)
         self.labirinto.mapa[2][2] = 'H'
         self.robo.posicao = (2, 1)
@@ -288,20 +261,18 @@ class TestRobo(unittest.TestCase):
         self.assertEqual(self.labirinto.mapa[2][2], 'VAZIO')
 
     def test_pegar_humano_lateral_esquerda(self):
-        # Posiciona o humano à esquerda do robô
         self.labirinto.posicao_humano = (2, 0)
         self.labirinto.mapa[2][0] = 'H'
         self.robo.posicao = (2, 1)
-        self.robo.direcao = 'N'  # Robô olhando para o norte
+        self.robo.direcao = 'N'
         self.assertTrue(self.robo.pegar_humano())
         self.assertTrue(self.robo.com_humano)
-        self.assertEqual(self.robo.direcao, 'W')  # O robô deve ter girado para o oeste
+        self.assertEqual(self.robo.direcao, 'W')
         # Verifica se o humano foi removido do mapa
         self.assertIsNone(self.labirinto.posicao_humano)
         self.assertEqual(self.labirinto.mapa[2][0], 'VAZIO')
 
     def test_seguir_caminho_sem_caminho(self):
-        # Testa o caso em que self.caminho está vazio
         self.robo.caminho = []
         with patch.object(self.robo, 'avancar') as mock_avancar:
             self.robo.seguir_caminho()
@@ -309,12 +280,10 @@ class TestRobo(unittest.TestCase):
             mock_avancar.assert_not_called()
 
     def test_seguir_caminho_avancar_false(self):
-        # Configura o robô com um caminho
         self.robo.caminho = [(1, 1), (1, 2), (1, 3)]
         self.robo.posicao = (1, 1)
         self.robo.direcao = 'E'
 
-        # Mock avancar para retornar False na segunda chamada
         original_avancar = self.robo.avancar
 
         def avancar_side_effect():

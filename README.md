@@ -6,7 +6,7 @@ Este projeto implementa um robô de salvamento que navega em um labirinto em bus
 
 A estrutura de pastas do projeto é a seguinte:
 
-```bash
+```
 projeto/
 ├── __init__.py        # Arquivo vazio, inicializa o diretório como um pacote Python
 ├── labirinto.py       # Implementa a classe Labirinto, que modela o ambiente do robô
@@ -105,7 +105,7 @@ E,PAREDE,PAREDE,VAZIO,SEM CARGA
 Missao concluida
 ``` 
 
-### `mapa.txt`
+### `Mapas`
 Contém a definição do layout do labirinto. Cada célula no mapa é representada por um caractere, como descrito anteriormente. O arquivo é lido pelo programa para configurar o ambiente.
 
 Exemplo de mapa:
@@ -135,6 +135,12 @@ Este diretório contém testes unitários para as classes `Labirinto` e `Robo`. 
 python main.py
 ```
 
+- Caso deseje selecionar um mapa em especifico:
+```bash
+python main.py outro_mapa.txt
+```
+Obs: caso não passe parametros por padrão ele pegara o mapa.txt.
+
 ## Testes
 Para rodar os testes unitários, utilize o seguinte comando:
 ```bash
@@ -144,3 +150,4 @@ python -m coverage run -m unittest discover
 ## Requisitos
 - Python 3.8 ou superior
 - Bibliotecas padrão do Python (sem dependências externas)
+- IDE: Pycharm ou VS Code. 
